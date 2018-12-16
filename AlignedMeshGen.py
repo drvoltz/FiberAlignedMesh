@@ -2,7 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import spatial
-
+import csv
+import os
 
 def NodeGen2DV45(x0,xl,y0,yl,z0,elemLenX,elemLenY,numElemX,numElemY,shiftX,shiftY):
     # Nodal coordinated
@@ -213,7 +214,7 @@ def DefineElem2D45(Node,NBtmEdge,NTopEdge,NLeftEdge,NRightEdge,shiftX,shiftY):
     
     return ElemQuad,ElemPyrd,eleCount
 
-def DefineElem2D90(Node,NBtmEdge,NTopEdge,NLeftEdge,NRightEdge,shiftX,shiftY):
+def DefineElem2D90(Node,shiftX,shiftY):
     A=spatial.cKDTree(Node[:,1:3])
     
     # Find nearest
@@ -253,18 +254,18 @@ def NodeGen3D(Node,specLenZ1):
         
     return Node3D,jmp
 
-def NodeGen3DV2(Node,specLenZ1,jmp):
-    #jmp=10**(np.ceil(np.log10(np.abs(max(Node[:,0]) + 1))))
-    
-    # Creating 3D Node points
-    Node3D=Node
-    NodeTmp=np.ones(np.shape(Node))
-    NodeTmp[:,0]=Node[:,0]+np.ones(np.shape(Node[:,0]))*jmp
-    NodeTmp[:,1:3]=Node[:,1:3]
-    NodeTmp[:,3]=specLenZ1
-    Node3D=np.append(Node3D,NodeTmp,axis=0)
-        
-    return Node3D,jmp
+#def NodeGen3DV2(Node,zt,maxNode):
+#    jmp=10**(np.ceil(np.log10(np.abs(maxNode + 1))))
+#    
+#    # Creating 3D Node points
+#    Node3D=Node
+#    NodeTmp=np.ones(np.shape(Node))
+#    NodeTmp[:,0]=Node[:,0]+np.ones(np.shape(Node[:,0]))*jmp
+#    NodeTmp[:,1:3]=Node[:,1:3]
+#    NodeTmp[:,3]=zt
+#    Node3D=np.append(Node3D,NodeTmp,axis=0)
+#        
+#    return Node3D,jmp
 
 def DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack):
     # Creating 3D pyramid elements points - 1st ply
@@ -291,7 +292,6 @@ def DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack):
     ElemQuad3DCzm=np.zeros(np.shape(ElemQuad3DPly[0,:]))   
     ElemQuad3DCzm=ElemQuad3DCzm.reshape(1,len(ElemQuad3DCzm))    
     
-    #ElemSet=[[ 1,min(ElemPyrd3D[:,0]),max(ElemQuad3D[:,0]) ]]
     ElemSetPly=[]
     ElemSetInt=[]
     ElemSetCzm=[]
@@ -299,6 +299,7 @@ def DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack):
     jmpElem=10**(np.ceil(np.log10(np.abs(max(ElemQuad3D[:,0]) + 1))))
     
     for i in range(1,len(specLenZ1)):
+        ElemSet=[]
         # Pyramid elements
         EleTmpNds=ElemPyrd3D[:,1:len(ElemPyrd3D)]
         EleTmpNds=EleTmpNds+np.ones(np.shape(ElemPyrd3D[:,1:len(ElemPyrd3D)]))*(i-1)*jmpNode
@@ -315,8 +316,8 @@ def DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack):
         else:
             ElemPyrd3DPly=np.append(ElemPyrd3DPly,EleTmpAdd,axis=0)
             ElemSetPly=np.append(ElemSetPly,ElemPyrd3DPly[:,0])
+        ElemSet=np.append(ElemSet,EleTmpAdd[:,0])
             
-        #ElemMin=min(EleTmpAdd[:,0])
         # Quad element
         EleTmpNds=ElemQuad3D[:,1:len(ElemQuad3D)]
         EleTmpNds=EleTmpNds+np.ones(np.shape(ElemQuad3D[:,1:len(ElemQuad3D)]))*(i-1)*jmpNode
@@ -333,57 +334,57 @@ def DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack):
         else:    
             ElemQuad3DPly=np.append(ElemQuad3DPly,EleTmpAdd,axis=0)
             ElemSetPly=np.append(ElemSetPly,ElemQuad3DPly[:,0])            
-        #ElemMax=max(EleTmpAdd[:,0])
-        #
-        #ElemSet=np.append(ElemSet,[[i,ElemMin,ElemMax]],axis=0)
-
+        ElemSet=np.append(ElemSet,EleTmpAdd[:,0])
+        writeEleSetV2(ElemSet,i)
+        writeSecOriV2(ElemSet,plyStack[i-1],i)
+        
     # Delete initial row
     ElemPyrd3DInt=ElemPyrd3DInt[1:len(ElemPyrd3DInt)]
     ElemQuad3DInt=ElemQuad3DInt[1:len(ElemQuad3DInt)]
     ElemPyrd3DCzm=ElemPyrd3DCzm[1:len(ElemPyrd3DCzm)]
-    ElemQuad3DCzm=ElemQuad3DCzm[1:len(ElemQuad3DCzm)]    
+    ElemQuad3DCzm=ElemQuad3DCzm[1:len(ElemQuad3DCzm)]   
     
     return ElemPyrd3DPly,ElemQuad3DPly,ElemPyrd3DInt,ElemQuad3DInt,ElemPyrd3DCzm,ElemQuad3DCzm,ElemSetPly,ElemSetInt,ElemSetCzm
 
-def DefineElem3DV2(ElemQuad,ElemPyrd,jmpNode):
-    # Creating 3D pyramid elements points - 1st ply
-    EleTmp=ElemPyrd[:,1:len(ElemPyrd)]
-    EleTmp=EleTmp+np.ones(np.shape(ElemPyrd[:,1:len(ElemPyrd)]))*jmpNode
-    ElemPyrd3D=np.append(ElemPyrd,EleTmp,axis=1)
-    ElemPyrd3D=ElemPyrd3D
-    
-    # Creating 3D quad elements points -  1st ply
-    EleTmp=ElemQuad[:,1:len(ElemQuad)]
-    EleTmp=EleTmp+np.ones(np.shape(ElemQuad[:,1:len(ElemQuad)]))*jmpNode
-    ElemQuad3D=np.append(ElemQuad,EleTmp,axis=1)
-    ElemQuad3D=ElemQuad3D
-    
-    # initialize element set
-    ElemSet=[]
-    # increment in element number
-    jmpElem=10**(np.ceil(np.log10(np.abs(max(ElemQuad3D[:,0]) + 1))))
-
-    # Pyramid elements
-    EleTmpNds=ElemPyrd3D[:,1:len(ElemPyrd3D)]
-    EleTmpNds=EleTmpNds+np.ones(np.shape(ElemPyrd3D[:,1:len(ElemPyrd3D)]))*(i-1)*jmpNode
-    EleTmpNums=ElemPyrd3D[:,0]
-    EleTmpNums=EleTmpNums+np.ones(np.shape(ElemPyrd3D[:,0]))*(i-1)*jmpElem
-    EleTmpNums=EleTmpNums.reshape(len(EleTmpNums),1)
-    EleTmpAdd=np.append(EleTmpNums,EleTmpNds,axis=1)
-    ElemPyrd3D=np.append(ElemPyrd3D,EleTmpAdd,axis=0)
-    ElemSet=np.append(ElemSet,ElemPyrd3D[:,0])
-    
-    # Quad element
-    EleTmpNds=ElemQuad3D[:,1:len(ElemQuad3D)]
-    EleTmpNds=EleTmpNds+np.ones(np.shape(ElemQuad3D[:,1:len(ElemQuad3D)]))*(i-1)*jmpNode
-    EleTmpNums=ElemQuad3D[:,0]
-    EleTmpNums=EleTmpNums+np.ones(np.shape(ElemQuad3D[:,0]))*(i-1)*jmpElem
-    EleTmpNums=EleTmpNums.reshape(len(EleTmpNums),1)
-    EleTmpAdd=np.append(EleTmpNums,EleTmpNds,axis=1)
-    ElemQuad3D=np.append(ElemQuad3D,EleTmpAdd,axis=0)
-    ElemSet=np.append(ElemSet,ElemQuad3D[:,0])            
-  
-    return ElemPyrd3D,ElemQuad3D,ElemSet
+#def DefineElem3DV2(ElemQuad,ElemPyrd,jmpNode):
+#    # Creating 3D pyramid elements points - 1st ply
+#    EleTmp=ElemPyrd[:,1:len(ElemPyrd)]
+#    EleTmp=EleTmp+np.ones(np.shape(ElemPyrd[:,1:len(ElemPyrd)]))*jmpNode
+#    ElemPyrd3D=np.append(ElemPyrd,EleTmp,axis=1)
+#    ElemPyrd3D=ElemPyrd3D
+#    
+#    # Creating 3D quad elements points -  1st ply
+#    EleTmp=ElemQuad[:,1:len(ElemQuad)]
+#    EleTmp=EleTmp+np.ones(np.shape(ElemQuad[:,1:len(ElemQuad)]))*jmpNode
+#    ElemQuad3D=np.append(ElemQuad,EleTmp,axis=1)
+#    ElemQuad3D=ElemQuad3D
+#    
+#    # initialize element set
+#    ElemSet=[]
+#    # increment in element number
+#    jmpElem=10**(np.ceil(np.log10(np.abs(max(ElemQuad3D[:,0]) + 1))))
+#
+#    # Pyramid elements
+#    EleTmpNds=ElemPyrd3D[:,1:len(ElemPyrd3D)]
+#    EleTmpNds=EleTmpNds+np.ones(np.shape(ElemPyrd3D[:,1:len(ElemPyrd3D)]))*jmpNode
+#    EleTmpNums=ElemPyrd3D[:,0]
+#    EleTmpNums=EleTmpNums+np.ones(np.shape(ElemPyrd3D[:,0]))*jmpElem
+#    EleTmpNums=EleTmpNums.reshape(len(EleTmpNums),1)
+#    EleTmpAdd=np.append(EleTmpNums,EleTmpNds,axis=1)
+#    ElemPyrd3D=np.append(ElemPyrd3D,EleTmpAdd,axis=0)
+#    ElemSet=np.append(ElemSet,ElemPyrd3D[:,0])
+#    
+#    # Quad element
+#    EleTmpNds=ElemQuad3D[:,1:len(ElemQuad3D)]
+#    EleTmpNds=EleTmpNds+np.ones(np.shape(ElemQuad3D[:,1:len(ElemQuad3D)]))*jmpNode
+#    EleTmpNums=ElemQuad3D[:,0]
+#    EleTmpNums=EleTmpNums+np.ones(np.shape(ElemQuad3D[:,0]))*jmpElem
+#    EleTmpNums=EleTmpNums.reshape(len(EleTmpNums),1)
+#    EleTmpAdd=np.append(EleTmpNums,EleTmpNds,axis=1)
+#    ElemQuad3D=np.append(ElemQuad3D,EleTmpAdd,axis=0)
+#    ElemSet=np.append(ElemSet,ElemQuad3D[:,0])            
+#  
+#    return ElemPyrd3D,ElemQuad3D,ElemSet
 
 def DefineThk(specLenZ0,PlyStack,thkPly,thkInt,thkCzm):
     specLenZ1=np.array([specLenZ0])
@@ -399,41 +400,86 @@ def DefineThk(specLenZ0,PlyStack,thkPly,thkInt,thkCzm):
     
     return specLenZ1
 
-def writeEleSet(ElemSet):
-    f = open('EleSetFile.inp', 'w')
-    for i in range(0,len(ElemSet)):
-        elemTmp='*ELSET, GENERATE, ELSET=SET'+str(int(ElemSet[i,0]))
-        f.write("%s\n" % elemTmp)  #
-        elemTmp=str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))+str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))+str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))+str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))
-        f.write("%s\n" % elemTmp)
-    f.close() 
+#def writeEleSet(ElemSet):
+#    f = open('EleSetFile.inp', 'w')
+#    for i in range(0,len(ElemSet)):
+#        elemTmp='*ELSET, GENERATE, ELSET=SET'+str(int(ElemSet[i,0]))
+#        f.write("%s\n" % elemTmp)  #
+#        elemTmp=str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))+str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))+str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))+str(int(ElemSet[i,1]))+','+str(int(ElemSet[i,2]))
+#        f.write("%s\n" % elemTmp)
+#    f.close() 
 
-def writeSecOri(ElemSet,PlyStack):
-    f = open('SecOri.inp', 'w')
-    for i in range(0,len(ElemSet)):
-        if PlyStack[i]==-1:
-            txtTmp1='*Orientation, name=PlyOri-'+str(int(ElemSet[i,0]))
-            txtTmp2='1., 0., 0., 0., 1., 0.,'
-            txtTmp3='3, 0'
-            txtTmp4='*Solid Section, elset=SET'+str(int(ElemSet[i,0]))+', orientation=PlyOri-'+str(int(ElemSet[i,0]))+', material=matInt'
-        elif PlyStack[i]==-2:
-            txtTmp1='*Orientation, name=PlyOri-'+str(int(ElemSet[i,0]))
-            txtTmp2='1., 0., 0., 0., 1., 0.,'
-            txtTmp3='3, 0'
-            txtTmp4='*Solid Section, elset=SET'+str(int(ElemSet[i,0]))+', orientation=PlyOri-'+str(int(ElemSet[i,0]))+', material=matCzm'            
-        else:
-            txtTmp1='*Orientation, name=PlyOri-'+str(int(ElemSet[i,0]))
-            txtTmp2='1., 0., 0., 0., 1., 0.,'
-            txtTmp3='3,'+ str(PlyStack[i])
-            txtTmp4='*Solid Section, elset=SET'+str(int(ElemSet[i,0]))+', orientation=PlyOri-'+str(int(ElemSet[i,0]))+', material=matLamina'            
-        txtTmp5=','   
-         
-        f.write("%s\n" % txtTmp1)  #
-        f.write("%s\n" % txtTmp2)  #
-        f.write("%s\n" % txtTmp3)  #
-        f.write("%s\n" % txtTmp4)  #        
-        f.write("%s\n" % txtTmp5)  #        
-    f.close()   
+def writeEleSetV2(ElemSet,idt):
+    ElemSet=ElemSet.astype(int)
+    f = open('EleSetFile.inp', 'a+')
+    elemTmp='*ELSET, GENERATE, ELSET=SET'+str(idt)
+    f.write("%s\n" % elemTmp)  #
+    f.close()    
+    ElemSetTmp1=ElemSet[0:len(ElemSet)//8*8].reshape(len(ElemSet)//8,8)   
+    with open("EleSetFile.inp", "a") as f:
+        writer = csv.writer(f)     
+        writer.writerows(ElemSetTmp1)
+    f.close()        
+    if len(ElemSet)%8>0:
+        ElemSetTmp2=ElemSet[len(ElemSet)//8*8:len(ElemSet)]  
+        with open("EleSetFile.inp", "a") as f:
+            writer = csv.writer(f)          
+            writer.writerow(ElemSetTmp2)
+    f.close()
+        
+
+#def writeSecOri(ElemSet,PlyStack):
+#    f = open('SecOri.inp', 'w+')
+#    for i in range(0,len(ElemSet)):
+#        if PlyStack[i]==-1:
+#            txtTmp1='*Orientation, name=PlyOri-'+str(int(ElemSet[i,0]))
+#            txtTmp2='1., 0., 0., 0., 1., 0.,'
+#            txtTmp3='3, 0'
+#            txtTmp4='*Solid Section, elset=SET'+str(int(ElemSet[i,0]))+', orientation=PlyOri-'+str(int(ElemSet[i,0]))+', material=matInt'
+#        elif PlyStack[i]==-2:
+#            txtTmp1='*Orientation, name=PlyOri-'+str(int(ElemSet[i,0]))
+#            txtTmp2='1., 0., 0., 0., 1., 0.,'
+#            txtTmp3='3, 0'
+#            txtTmp4='*Solid Section, elset=SET'+str(int(ElemSet[i,0]))+', orientation=PlyOri-'+str(int(ElemSet[i,0]))+', material=matCzm'            
+#        else:
+#            txtTmp1='*Orientation, name=PlyOri-'+str(int(ElemSet[i,0]))
+#            txtTmp2='1., 0., 0., 0., 1., 0.,'
+#            txtTmp3='3,'+ str(PlyStack[i])
+#            txtTmp4='*Solid Section, elset=SET'+str(int(ElemSet[i,0]))+', orientation=PlyOri-'+str(int(ElemSet[i,0]))+', material=matLamina'            
+#        txtTmp5=','   
+#         
+#        f.write("%s\n" % txtTmp1)  #
+#        f.write("%s\n" % txtTmp2)  #
+#        f.write("%s\n" % txtTmp3)  #
+#        f.write("%s\n" % txtTmp4)  #        
+#        f.write("%s\n" % txtTmp5)  #        
+#    f.close()   
+
+def writeSecOriV2(ElemSet,PlyStack,idt):
+    f = open('SecOri.inp', 'a+')
+    if PlyStack==-1:
+        txtTmp1='*Orientation, name=PlyOri-'+str(idt)
+        txtTmp2='1., 0., 0., 0., 1., 0.,'
+        txtTmp3='3, 0'
+        txtTmp4='*Solid Section, elset=SET'+str(idt)+', orientation=PlyOri-'+str(idt)+', material=matInt'
+    elif PlyStack==-2:
+        txtTmp1='*Orientation, name=PlyOri-'+str(idt)
+        txtTmp2='1., 0., 0., 0., 1., 0.,'
+        txtTmp3='3, 0'
+        txtTmp4='*Solid Section, elset=SET'+str(idt)+', orientation=PlyOri-'+str(idt)+', material=matCzm'            
+    else:
+        txtTmp1='*Orientation, name=PlyOri-'+str(idt)
+        txtTmp2='1., 0., 0., 0., 1., 0.,'
+        txtTmp3='3,'+ str(PlyStack)
+        txtTmp4='*Solid Section, elset=SET'+str(idt)+', orientation=PlyOri-'+str(idt)+', material=matLamina'            
+    txtTmp5=','   
+     
+    f.write("%s\n" % txtTmp1)  #
+    f.write("%s\n" % txtTmp2)  #
+    f.write("%s\n" % txtTmp3)  #
+    f.write("%s\n" % txtTmp4)  #        
+    f.write("%s\n" % txtTmp5)  #        
+    f.close() 
 
 def plotElem(Elem,Node):
     Elem=Elem.astype(int)
@@ -459,16 +505,16 @@ def plotElem(Elem,Node):
 
 # Inputs
 #plyStack=[45,-1,-45,-1,45,-1,-45,-45,-1,45,-1,-45,-1,45]
-plyStack=[45,-2,-1,-2,45]
+plyStack=[45,-2,-1,-2,-45,-45,-2,-1,-2,45]
 elemLen=0.1 #0.0015*np.sqrt(2)/2; # desired element size
-fiberAngle=45*np.pi/180;
-specLenX=1;
-blockLen=0.25
-specLenYRatio=2;
+fiberAngle=45*np.pi/180
+specLenX=2
+blockLen=0.5
+specLenYRatio=2
 thkPly=0.0075
 thkInt=0.0012
 thkCzm=0.0
-specLenZ0=0;
+specLenZ0=0
 meshAspectRatio=1
 
 # Non zero start point
@@ -479,6 +525,10 @@ x3=x2+blockLen
 y0=0
 yl=y0+specLenX/specLenYRatio
 z0=0
+
+# Delete prior files
+os.remove('EleSetFile.inp')
+os.remove('SecOri.inp')
 
 # Derived parameters
 elemLenX=np.sqrt(2)*elemLen # desired element length X
@@ -519,7 +569,7 @@ for i in range(0,len(NEdgeX1)):
 
 # Define 2D elements
 # <ElemQuadL,ElemPyrdL,maxElemNoL>
-ElemQuadL,maxElemNoL=DefineElem2D90(NodeL,NEdgeY0L,NEdgeY1L,NEdgeX0L,NEdgeX1L,elemLenXBL,elemLenYBL)
+ElemQuadL,maxElemNoL=DefineElem2D90(NodeL,elemLenXBL,elemLenYBL)
 maxNodeNum=np.max(ElemQuadL[:,0])
 
 ElemQuadC,ElemPyrdC,maxElemNoC=DefineElem2D45(NodeC,NEdgeY0,NEdgeY1,NEdgeX0,NEdgeX1,shiftX,shiftY)
@@ -527,7 +577,7 @@ ElemPyrdC[:,0]=ElemPyrdC[:,0]+maxNodeNum
 ElemQuadC[:,0]=ElemQuadC[:,0]+maxNodeNum
 maxNodeNum=np.max(ElemQuadC[:,0])
 
-ElemQuadR,maxElemNoR=DefineElem2D90(NodeR,NEdgeY0R,NEdgeY1R,NEdgeX0R,NEdgeX1R,elemLenXBR,elemLenYBR)
+ElemQuadR,maxElemNoR=DefineElem2D90(NodeR,elemLenXBR,elemLenYBR)
 ElemQuadR[:,0]=ElemQuadR[:,0]+maxNodeNum
 maxNodeNum=np.max(ElemQuadR[:,0])
 
@@ -557,43 +607,27 @@ ElemQuad=np.append(ElemQuad,ElemQuadR,axis=0)
 # Pyramid elements
 ElemPyrd=ElemPyrdC
 
+# Find boundaries
+NCorners,NEdgeY0,NEdgeY1,NEdgeX0,NEdgeX1,NBoundary=FindBoundaries(Node,x3,yl,elemLenX,elemLenY)
+
 # Generate 3D nodes using thickness sweep
 Node3D,jmpNode=NodeGen3D(Node,specLenZ1)
 
-## Define 3D elements
-#ElemPyrd3DPly,ElemQuad3DPly,ElemPyrd3DInt,ElemQuad3DInt,ElemPyrd3DCzm,ElemQuad3DCzm,ElemSetPly,ElemSetInt,ElemSetCzm=DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack)
-ElemPyrd3D,ElemQuad3D,ElemSet=DefineElem3DV2(ElemQuad,ElemPyrd,jmpNode)
+# Define 3D elements
+ElemPyrd3DPly,ElemQuad3DPly,ElemPyrd3DInt,ElemQuad3DInt,ElemPyrd3DCzm,ElemQuad3DCzm,ElemSetPly,ElemSetInt,ElemSetCzm=DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack)
+
+## Write data to csv file.
+np.savetxt("Node3D.csv", Node3D, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))
 #
-### Write element set
-#writeEleSet(ElemSet)
-##writeEleSet(ElemSetL)
-##writeEleSet(ElemSetC)
-##writeEleSet(ElemSetR)
-##
-### Write element set
-#writeSecOri(ElemSet,plyStack)
-##writeSecOri(ElemSetL,plyStack)
-##writeSecOri(ElemSetC,plyStack)
-##writeSecOri(ElemSetR,plyStack)
+np.savetxt("ElemPyrd3DPly.csv", ElemPyrd3DPly, delimiter=",", fmt='%1.2i')
+np.savetxt("ElemQuad3DPly.csv", ElemQuad3DPly, delimiter=",", fmt='%1.2i')
+#if min(plyStack)==-1:
+np.savetxt("ElemPyrd3DInt.csv", ElemPyrd3DInt, delimiter=",", fmt='%1.2i')
+np.savetxt("ElemQuad3DInt.csv", ElemQuad3DInt, delimiter=",", fmt='%1.2i')
+#if min(plyStack)==-1:
+np.savetxt("ElemPyrd3DCzm.csv", ElemPyrd3DCzm, delimiter=",", fmt='%1.2i')
+np.savetxt("ElemQuad3DCzm.csv", ElemQuad3DCzm, delimiter=",", fmt='%1.2i')
 #
-##np.savetxt("Node2D.csv", Node, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))    
-##np.savetxt("ElemQuad2DPly.csv", ElemQuad, delimiter=",", fmt='%1.2i')
-##np.savetxt("ElemPyrd2DPly.csv", ElemPyrd, delimiter=",", fmt='%1.2i')
-#
-### Write data to csv file.
-#np.savetxt("Node3D.csv", Node3D, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))    
-##np.savetxt("Node3DC.csv", Node3DC, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))
-##np.savetxt("Node3DR.csv", Node3DR, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))
-##
-#np.savetxt("ElemPyrd3DPly.csv", ElemPyrd3DPly, delimiter=",", fmt='%1.2i')
-#np.savetxt("ElemQuad3DPly.csv", ElemQuad3DPly, delimiter=",", fmt='%1.2i')
-##if min(plyStack)==-1:
-#np.savetxt("ElemPyrd3DInt.csv", ElemPyrd3DInt, delimiter=",", fmt='%1.2i')
-#np.savetxt("ElemQuad3DInt.csv", ElemQuad3DInt, delimiter=",", fmt='%1.2i')
-##if min(plyStack)==-1:
-#np.savetxt("ElemPyrd3DCzm.csv", ElemPyrd3DCzm, delimiter=",", fmt='%1.2i')
-#np.savetxt("ElemQuad3DCzm.csv", ElemQuad3DCzm, delimiter=",", fmt='%1.2i')
-##
 ## Print stats
 #print('Total nodes: ',max(Node3D[:,0]))
 #print('Total pyramid elements - Ply: ',max(ElemPyrd3DPly[:,0]))
