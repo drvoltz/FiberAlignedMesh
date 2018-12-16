@@ -506,9 +506,9 @@ def plotElem(Elem,Node):
 # Inputs
 #plyStack=[45,-1,-45,-1,45,-1,-45,-45,-1,45,-1,-45,-1,45]
 plyStack=[45,-2,-1,-2,-45,-45,-2,-1,-2,45]
-elemLen=0.1 #0.0015*np.sqrt(2)/2; # desired element size
+elemLen=0.075 #0.0015*np.sqrt(2)/2; # desired element size
 fiberAngle=45*np.pi/180
-specLenX=2
+specLenX=4
 blockLen=0.5
 specLenYRatio=2
 thkPly=0.0075
@@ -612,6 +612,9 @@ NCorners,NEdgeY0,NEdgeY1,NEdgeX0,NEdgeX1,NBoundary=FindBoundaries(Node,x3,yl,ele
 
 # Generate 3D nodes using thickness sweep
 Node3D,jmpNode=NodeGen3D(Node,specLenZ1)
+
+# Find boundaries
+NCorners3D,NEdgeY03D,NEdgeY13D,NEdgeX03D,NEdgeX13D,NBoundary3D=FindBoundaries(Node3D,x3,yl,elemLenX,elemLenY)
 
 # Define 3D elements
 ElemPyrd3DPly,ElemQuad3DPly,ElemPyrd3DInt,ElemQuad3DInt,ElemPyrd3DCzm,ElemQuad3DCzm,ElemSetPly,ElemSetInt,ElemSetCzm=DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack)
