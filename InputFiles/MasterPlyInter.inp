@@ -1,0 +1,17 @@
+*Heading
+** Job name: W33T Model name: Model-1
+*Node
+*INCLUDE, input=Node3D.csv
+*Element, type=C3D6
+*INCLUDE, input=ElemPyrd3DPly.csv
+*Element, type=C3D8R
+*INCLUDE, input=ElemQuad3DPly.csv
+*Element, type=C3D6
+*INCLUDE, input=ElemPyrd3DInt.csv
+*Element, type=C3D8R
+*INCLUDE, input=ElemQuad3DInt.csv
+*INCLUDE, input=EleSetFile.inp
+*INCLUDE, input=NodeSetFile.inp
+*INCLUDE, input=SecOri.inp
+*INCLUDE, input=MatFile.inp
+*INCLUDE, input=BC.inp

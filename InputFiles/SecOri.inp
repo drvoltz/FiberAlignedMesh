@@ -1,0 +1,70 @@
+*Orientation, name=PlyOri-1
+1., 0., 0., 0., 1., 0.,
+3,45
+*Solid Section, elset=SET1, orientation=PlyOri-1, material=matLamina
+,
+*Orientation, name=PlyOri-2
+1., 0., 0., 0., 1., 0.,
+3, 0
+*Solid Section, elset=SET2, orientation=PlyOri-2, material=matInt
+,
+*Orientation, name=PlyOri-3
+1., 0., 0., 0., 1., 0.,
+3,-45
+*Solid Section, elset=SET3, orientation=PlyOri-3, material=matLamina
+,
+*Orientation, name=PlyOri-4
+1., 0., 0., 0., 1., 0.,
+3, 0
+*Solid Section, elset=SET4, orientation=PlyOri-4, material=matInt
+,
+*Orientation, name=PlyOri-5
+1., 0., 0., 0., 1., 0.,
+3,45
+*Solid Section, elset=SET5, orientation=PlyOri-5, material=matLamina
+,
+*Orientation, name=PlyOri-6
+1., 0., 0., 0., 1., 0.,
+3, 0
+*Solid Section, elset=SET6, orientation=PlyOri-6, material=matInt
+,
+*Orientation, name=PlyOri-7
+1., 0., 0., 0., 1., 0.,
+3,-45
+*Solid Section, elset=SET7, orientation=PlyOri-7, material=matLamina
+,
+*Orientation, name=PlyOri-8
+1., 0., 0., 0., 1., 0.,
+3,-45
+*Solid Section, elset=SET8, orientation=PlyOri-8, material=matLamina
+,
+*Orientation, name=PlyOri-9
+1., 0., 0., 0., 1., 0.,
+3, 0
+*Solid Section, elset=SET9, orientation=PlyOri-9, material=matInt
+,
+*Orientation, name=PlyOri-10
+1., 0., 0., 0., 1., 0.,
+3,45
+*Solid Section, elset=SET10, orientation=PlyOri-10, material=matLamina
+,
+*Orientation, name=PlyOri-11
+1., 0., 0., 0., 1., 0.,
+3, 0
+*Solid Section, elset=SET11, orientation=PlyOri-11, material=matInt
+,
+*Orientation, name=PlyOri-12
+1., 0., 0., 0., 1., 0.,
+3,-45
+*Solid Section, elset=SET12, orientation=PlyOri-12, material=matLamina
+,
+*Orientation, name=PlyOri-13
+1., 0., 0., 0., 1., 0.,
+3, 0
+*Solid Section, elset=SET13, orientation=PlyOri-13, material=matInt
+,
+*Orientation, name=PlyOri-14
+1., 0., 0., 0., 1., 0.,
+3,45
+*Solid Section, elset=SET14, orientation=PlyOri-14, material=matLamina
+,

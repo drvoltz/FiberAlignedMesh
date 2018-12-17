@@ -1,0 +1,59 @@
+** *****************************************************************************
+*Amplitude, name=Amp-1, definition=SMOOTH STEP
+             0.,              0.,              1.,              1.
+** 
+** ----------------------------------------------------------------
+** 
+** STEP: Step-1
+** 
+*Step, name=Step-1, nlgeom=YES
+*Dynamic, Explicit
+, 1.
+*Bulk Viscosity
+0.06, 1.2
+** 
+** Mass Scaling: Semi-Automatic
+**               Whole Model
+*Variable Mass Scaling, dt=1e-05, type=below min, frequency=10
+** BOUNDARY CONDITIONS
+** 
+** Name: BC-1 Type: Displacement/Rotation
+*Boundary, amplitude=Amp-1
+NSETX0, 1, 1
+NSETX0, 4, 4
+NSETX0, 5, 5
+NSETX0, 6, 6
+** Name: BC-2 Type: Displacement/Rotation
+*Boundary, amplitude=Amp-1
+NSETX1, 1, 1, 0.25
+NSETX1, 4, 4
+NSETX1, 5, 5
+NSETX1, 6, 6
+** Name: BC-3 Type: Displacement/Rotation
+*Boundary
+NSETCrns, 2, 2
+** Name: BC-4 Type: Displacement/Rotation
+*Boundary
+NSETX0BtmEdge, 3, 3
+** 
+** OUTPUT REQUESTS
+** 
+*Restart, write, number interval=1, time marks=NO
+** 
+** FIELD OUTPUT: F-Output-1
+** 
+*Output, field, number interval=200
+*Node Output
+A, RF, U, V
+*Element Output, directions=YES
+DMICRT, EVF, LE, PE, PEEQ, PEEQVAVG, PEVAVG, S, SDEG, STATUS, SVAVG
+SDV, TRIAX
+**
+** FIELD OUTPUT: F-Output-1
+** 
+*Output, field, variable=PRESELECT
+** 
+** HISTORY OUTPUT: H-Output-1
+** 
+*Output, history, variable=PRESELECT
+*End Step

@@ -1,0 +1,8 @@
+*Heading
+** Job name: W33T Model name: Model-1
+*Node
+*INCLUDE, input=Node2D.csv
+*Element, type=CPS3
+*INCLUDE, input=ElemPyrd2DPly.csv
+*Element, type=CPS4
+*INCLUDE, input=ElemQuad2DPly.csv
