@@ -71,7 +71,8 @@ def FindNodeRange(loc,Node,elemLenX,elemLenY):
 
 def FindBoundariesV2(Node,x0,xl,y0,yl,numElemX,numElemY):
     # Find corners
-    loc=np.array([[x0,y0],[xl,0],[0,yl],[xl,yl]])
+    #loc=np.array([[x0,y0],[xl,0],[0,yl],[xl,yl]])
+    loc=np.array([[x0,y0]])
     NCorners= FindNodes(loc,Node)
     
     # Find bottom edge
@@ -412,7 +413,7 @@ def DefineThk(specLenZ0,PlyStack,thkPly,thkInt,thkCzm):
 def writeEleSetV2(ElemSet,idt):
     ElemSet=ElemSet.astype(int)
     f = open('EleSetFile.inp', 'a+')
-    elemTmp='*ELSET, GENERATE, ELSET=SET'+str(idt)
+    elemTmp='*ELSET, ELSET=SET'+str(idt)
     f.write("%s\n" % elemTmp)  #
     f.close()    
     ElemSetTmp1=ElemSet[0:len(ElemSet)//8*8].reshape(len(ElemSet)//8,8)   
@@ -427,7 +428,24 @@ def writeEleSetV2(ElemSet,idt):
             writer.writerow(ElemSetTmp2)
     f.close()
         
-
+def writeNodeSetV2(NodeSet,idt):
+    NodeSet=NodeSet.astype(int)
+    f = open('NodeSetFile.inp', 'a+')
+    elemTmp='*NSET, NSET=NSET'+idt
+    f.write("%s\n" % elemTmp)  #
+    f.close()    
+    NodeSetTmp1=NodeSet[0:len(NodeSet)//8*8].reshape(len(NodeSet)//8,8)   
+    with open("NodeSetFile.inp", "a") as f:
+        writer = csv.writer(f)     
+        writer.writerows(NodeSetTmp1)
+    f.close()        
+    if len(NodeSet)%8>0:
+        NodeSetTmp2=NodeSet[len(NodeSet)//8*8:len(NodeSet)]  
+        with open("NodeSetFile.inp", "a") as f:
+            writer = csv.writer(f)          
+            writer.writerow(NodeSetTmp2)
+    f.close()
+    
 #def writeSecOri(ElemSet,PlyStack):
 #    f = open('SecOri.inp', 'w+')
 #    for i in range(0,len(ElemSet)):
@@ -504,13 +522,13 @@ def plotElem(Elem,Node):
 ###############################################################################
 
 # Inputs
-#plyStack=[45,-1,-45,-1,45,-1,-45,-45,-1,45,-1,-45,-1,45]
-plyStack=[45,-2,-1,-2,-45,-45,-2,-1,-2,45]
-elemLen=0.1 #0.0015*np.sqrt(2)/2; # desired element size
+plyStack=[45,-1,-45,-1,45,-1,-45,-45,-1,45,-1,-45,-1,45]
+#plyStack=[45,-2,-1,-2,-45,-2,-1,-2,45,-2,-1,-2,-45,-45,-2,-1,-2,45,-2,-1,-2,-45,-2,-1,-2,45]
+elemLen=0.025 #0.0015*np.sqrt(2)/2; # desired element size
 fiberAngle=45*np.pi/180
-specLenX=2
-blockLen=0.5
-specLenYRatio=2
+specLenX=2.75
+blockLen=0.25
+specLenYRatio=0.37
 thkPly=0.0075
 thkInt=0.0012
 thkCzm=0.0
@@ -523,12 +541,13 @@ x1=blockLen
 x2=x1+specLenX
 x3=x2+blockLen
 y0=0
-yl=y0+specLenX/specLenYRatio
+yl=y0+specLenX*specLenYRatio
 z0=0
 
 # Delete prior files
 os.remove('EleSetFile.inp')
 os.remove('SecOri.inp')
+os.remove('NodeSetFile.inp')
 
 # Derived parameters
 elemLenX=np.sqrt(2)*elemLen # desired element length X
@@ -547,12 +566,12 @@ shiftX=elemLenX*np.cos(fiberAngle)**2;
 shiftY=elemLenY*np.cos(fiberAngle)*np.sin(fiberAngle);
 
 # Generate node array
-NodeL, elemLenXBL,elemLenYBL=NodeGen2DV90(x0,x1,y0,yl,z0,elemLenX,elemLenY,4,numElemY)
+NodeL, elemLenXBL,elemLenYBL=NodeGen2DV90(x0,x1,y0,yl,z0,elemLenX,elemLenY,6,numElemY)
 maxNodeNum=np.max(NodeL[:,0])
 NodeC=NodeGen2DV45(x1,x2,y0,yl,z0,elemLenX,elemLenY,numElemX,numElemY,shiftX,shiftY)
 NodeC[:,0]=NodeC[:,0]+maxNodeNum
 maxNodeNum=np.max(NodeC[:,0])
-NodeR, elemLenXBR,elemLenYBR=NodeGen2DV90(x2,x3,y0,yl,z0,elemLenX,elemLenY,4,numElemY)
+NodeR, elemLenXBR,elemLenYBR=NodeGen2DV90(x2,x3,y0,yl,z0,elemLenX,elemLenY,6,numElemY)
 NodeR[:,0]=NodeR[:,0]+maxNodeNum
 maxNodeNum=np.max(NodeR[:,0])
 
@@ -581,16 +600,11 @@ ElemQuadR,maxElemNoR=DefineElem2D90(NodeR,elemLenXBR,elemLenYBR)
 ElemQuadR[:,0]=ElemQuadR[:,0]+maxNodeNum
 maxNodeNum=np.max(ElemQuadR[:,0])
 
-#
-#plt.scatter(NodeL[:,1],NodeL[:,2])
-plotElem(ElemQuadL,NodeL)
-
-#plt.scatter(NodeR[:,1],NodeR[:,2])
-plotElem(ElemQuadR,NodeR)
-
-#plt.scatter(NodeC[:,1],NodeC[:,2])
-plotElem(ElemQuadC,NodeC)
-plotElem(ElemPyrdC,NodeC)
+##
+#plotElem(ElemQuadL,NodeL)
+#plotElem(ElemQuadR,NodeR)
+#plotElem(ElemQuadC,NodeC)
+#plotElem(ElemPyrdC,NodeC)
 
 # Collect Nodes
 Node=NodeL
@@ -612,6 +626,16 @@ NCorners,NEdgeY0,NEdgeY1,NEdgeX0,NEdgeX1,NBoundary=FindBoundaries(Node,x3,yl,ele
 
 # Generate 3D nodes using thickness sweep
 Node3D,jmpNode=NodeGen3D(Node,specLenZ1)
+
+# Find boundaries
+NCorners3D,NEdgeY03D,NEdgeY13D,NEdgeX03D,NEdgeX13D,NBoundary3D=FindBoundariesV2(Node3D,x0,x3,y0,yl,numElemX,numElemY)
+
+writeNodeSetV2(NEdgeX03D[:,0],'X0')
+writeNodeSetV2(NEdgeX13D[:,0],'X1')
+writeNodeSetV2(NEdgeY03D[:,0],'Y0')
+writeNodeSetV2(NEdgeY13D[:,0],'Y1')
+writeNodeSetV2(NCorners3D[:,0],'Crns')
+writeNodeSetV2(NEdgeX0L[:,0],'X0BtmEdge')
 
 # Define 3D elements
 ElemPyrd3DPly,ElemQuad3DPly,ElemPyrd3DInt,ElemQuad3DInt,ElemPyrd3DCzm,ElemQuad3DCzm,ElemSetPly,ElemSetInt,ElemSetCzm=DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack)
