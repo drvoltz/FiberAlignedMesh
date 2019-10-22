@@ -505,12 +505,13 @@ def plotElem(Elem,Node):
 
 # Inputs
 #plyStack=[45,-1,-45,-1,45,-1,-45,-45,-1,45,-1,-45,-1,45]
-plyStack=[45,-2,-1,-2,-45,-45,-2,-1,-2,45]
+#plyStack=[45,-2,-1,-2,-45,-45,-2,-1,-2,45]
+plyStack=[45]
 elemLen=0.075 #0.0015*np.sqrt(2)/2; # desired element size
-fiberAngle=45*np.pi/180
-specLenX=4
-blockLen=0.5
-specLenYRatio=2
+fiberAngle=85*np.pi/180
+specLenX=1
+blockLen=0.25
+specLenYRatio=1
 thkPly=0.0075
 thkInt=0.0012
 thkCzm=0.0
@@ -527,8 +528,8 @@ yl=y0+specLenX/specLenYRatio
 z0=0
 
 # Delete prior files
-os.remove('EleSetFile.inp')
-os.remove('SecOri.inp')
+#os.remove('EleSetFile.inp')
+#os.remove('SecOri.inp')
 
 # Derived parameters
 elemLenX=np.sqrt(2)*elemLen # desired element length X
@@ -619,17 +620,17 @@ NCorners3D,NEdgeY03D,NEdgeY13D,NEdgeX03D,NEdgeX13D,NBoundary3D=FindBoundaries(No
 # Define 3D elements
 ElemPyrd3DPly,ElemQuad3DPly,ElemPyrd3DInt,ElemQuad3DInt,ElemPyrd3DCzm,ElemQuad3DCzm,ElemSetPly,ElemSetInt,ElemSetCzm=DefineElem3D(ElemQuad,ElemPyrd,jmpNode,specLenZ1,plyStack)
 
-## Write data to csv file.
-np.savetxt("Node3D.csv", Node3D, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))
-#
-np.savetxt("ElemPyrd3DPly.csv", ElemPyrd3DPly, delimiter=",", fmt='%1.2i')
-np.savetxt("ElemQuad3DPly.csv", ElemQuad3DPly, delimiter=",", fmt='%1.2i')
-#if min(plyStack)==-1:
-np.savetxt("ElemPyrd3DInt.csv", ElemPyrd3DInt, delimiter=",", fmt='%1.2i')
-np.savetxt("ElemQuad3DInt.csv", ElemQuad3DInt, delimiter=",", fmt='%1.2i')
-#if min(plyStack)==-1:
-np.savetxt("ElemPyrd3DCzm.csv", ElemPyrd3DCzm, delimiter=",", fmt='%1.2i')
-np.savetxt("ElemQuad3DCzm.csv", ElemQuad3DCzm, delimiter=",", fmt='%1.2i')
+### Write data to csv file.
+#np.savetxt("Node3D.csv", Node3D, delimiter=",", fmt=('%1.2i','%1.6f','%1.6f','%1.6f'))
+##
+#np.savetxt("ElemPyrd3DPly.csv", ElemPyrd3DPly, delimiter=",", fmt='%1.2i')
+#np.savetxt("ElemQuad3DPly.csv", ElemQuad3DPly, delimiter=",", fmt='%1.2i')
+##if min(plyStack)==-1:
+#np.savetxt("ElemPyrd3DInt.csv", ElemPyrd3DInt, delimiter=",", fmt='%1.2i')
+#np.savetxt("ElemQuad3DInt.csv", ElemQuad3DInt, delimiter=",", fmt='%1.2i')
+##if min(plyStack)==-1:
+#np.savetxt("ElemPyrd3DCzm.csv", ElemPyrd3DCzm, delimiter=",", fmt='%1.2i')
+#np.savetxt("ElemQuad3DCzm.csv", ElemQuad3DCzm, delimiter=",", fmt='%1.2i')
 #
 ## Print stats
 #print('Total nodes: ',max(Node3D[:,0]))
